@@ -38,6 +38,11 @@ func (s *Server) populateEnvironmentVariables(pod *corev1.Pod) error {
 					if vf.Optional != nil && !*vf.Optional && errors.IsNotFound(err) {
 						return fmt.Errorf("Secret %s is required by Pod %s and does not exist", vf.Name, pod.Name)
 					}
+
+					if err != nil {
+						return fmt.Errorf("Error retrieving Secret %s required by Pod %s: %s", vf.Name,pod.Name,err)
+					}
+
 					v, ok := sec.Data[vf.Key]
 					if !ok {
 						return fmt.Errorf("Secret %s key %s is required by Pod %s and does not exist", vf.Name, vf.Key, pod.Name)
