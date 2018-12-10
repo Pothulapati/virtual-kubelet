@@ -20,8 +20,9 @@ func (s *Server) populateEnvironmentVariables(pod *corev1.Pod) error {
 						return fmt.Errorf("ConfigMap %s is required by Pod %s and does not exist", vf.Name, pod.Name)
 					}
 
-					if err != nil {
-						return fmt.Errorf("Error retrieving ConfigMap %s required by Pod %s: %s", vf.Name, pod.Name, err)
+					//Continue if the ConfigMap is optional
+					if vf.Optional != nil && *vf.Optional && errors.IsNotFound(err) {
+						continue
 					}
 
 					var ok bool
@@ -39,8 +40,9 @@ func (s *Server) populateEnvironmentVariables(pod *corev1.Pod) error {
 						return fmt.Errorf("Secret %s is required by Pod %s and does not exist", vf.Name, pod.Name)
 					}
 
-					if err != nil {
-						return fmt.Errorf("Error retrieving Secret %s required by Pod %s: %s", vf.Name,pod.Name,err)
+					//Continue if the secret are optional
+					if vf.Optional != nil && *vf.Optional && errors.IsNotFound(err) {
+						continue
 					}
 
 					v, ok := sec.Data[vf.Key]
