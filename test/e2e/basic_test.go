@@ -189,6 +189,187 @@ func TestPodLifecycle(t *testing.T) {
 	}
 }
 
+//Create a Pod with Optional Secrets and checking if it exists
+func TestOptionalSecrets(t *testing.T) () {
+	//Create a pod with a single container with the above secrets
+	pod, err := f.CreatePod(f.CreatePodWithOptionalSecrets())
+
+	//Delete the pod after the tests
+	defer func(){
+		if err := f.DeletePod(pod.Namespace,pod.Name); err != nil && !apierrors.IsNotFound(err){
+			t.Error(err)
+		}
+	}()
+
+	//Wait for the pod to be reported as running and ready
+	if err := f.WaitUntilPodReady(pod.Namespace, pod.Name); err != nil {
+		t.Fatal(err)
+	}
+
+	//Getting stats from the provider
+	stats, err := f.GetStatsSummary()
+	if err != nil{
+		t.Fatal(err)
+	}
+
+	//Checking if the pod is present
+	if _, err := findPodInPodStats(stats,pod); err !=nil{
+		t.Fatal(err)
+	}
+
+	// Wait for the pod to be deleted in a separate goroutine.
+	// This ensures that we don't possibly miss the MODIFIED/DELETED events due to establishing the watch too late in the process.
+	podCh := make(chan error)
+	go func() {
+		// Wait for the pod to be reported as having been marked for deletion.
+		if err := f.WaitUntilPodDeleted(pod.Namespace, pod.Name); err != nil {
+			// Propagate the error to the outside so we can fail the test.
+			podCh <- err
+		} else {
+			// Close the podCh channel, signaling we've observed deletion of the pod.
+			close(podCh)
+		}
+	}()
+
+	// Delete the pod.
+	if err := f.DeletePod(pod.Namespace, pod.Name); err != nil {
+		t.Fatal(err)
+	}
+	// Wait for the delete event to be ACKed.
+	if err := <-podCh; err != nil {
+		t.Fatal(err)
+	}
+}
+
+//Create a Pod with Mandatory Secrets
+func TestMandatorySecrets(t *testing.T) () {
+	//Create a pod with a single container with the above secrets
+	pod, err := f.CreatePod(f.CreatePodWithMandatorySecrets())
+
+	//Getting stats from the provider
+	stats, err := f.GetStatsSummary()
+	if err != nil{
+		t.Fatal(err)
+	}
+
+	//Checking if the pod is present
+	if _, err := findPodInPodStats(stats,pod); err == nil{
+		t.Fatalf("Expecting to NOT find pod \"%s/%s\" when there are mandatory non existant secrets:",pod.Namespace,pod.Name)
+	}
+
+	// This ensures that we don't possibly miss the MODIFIED/DELETED events due to establishing the watch too late in the process.
+	podCh := make(chan error)
+	go func() {
+		// Wait for the pod to be reported as having been marked for deletion.
+		if err := f.WaitUntilPodDeleted(pod.Namespace, pod.Name); err != nil {
+			// Propagate the error to the outside so we can fail the test.
+			podCh <- err
+		} else {
+			// Close the podCh channel, signaling we've observed deletion of the pod.
+			close(podCh)
+		}
+	}()
+
+	// Delete the pod.
+	if err := f.DeletePod(pod.Namespace, pod.Name); err != nil {
+		t.Fatal(err)
+	}
+	// Wait for the delete event to be ACKed.
+	if err := <-podCh; err != nil {
+		t.Fatal(err)
+	}
+}
+
+//Create a Pod with Optional Config Maps
+func TestOptionalConfigMaps(t *testing.T) () {
+	//Create a pod with a single container with the above secrets
+	pod, err := f.CreatePod(f.CreatePodWithOptionalConfigMaps())
+
+	//Delete the pod after the tests
+	defer func(){
+		if err := f.DeletePod(pod.Namespace,pod.Name); err != nil && !apierrors.IsNotFound(err){
+			t.Error(err)
+		}
+	}()
+
+	//Wait for the pod to be reported as running and ready
+	if err := f.WaitUntilPodReady(pod.Namespace, pod.Name); err != nil {
+		t.Fatal(err)
+	}
+
+	//Getting stats from the provider
+	stats, err := f.GetStatsSummary()
+	if err != nil{
+		t.Fatal(err)
+	}
+
+	//Checking if the pod is present
+	if _, err := findPodInPodStats(stats,pod); err !=nil{
+		t.Fatal(err)
+	}
+
+	// Wait for the pod to be deleted in a separate goroutine.
+	// This ensures that we don't possibly miss the MODIFIED/DELETED events due to establishing the watch too late in the process.
+	podCh := make(chan error)
+	go func() {
+		// Wait for the pod to be reported as having been marked for deletion.
+		if err := f.WaitUntilPodDeleted(pod.Namespace, pod.Name); err != nil {
+			// Propagate the error to the outside so we can fail the test.
+			podCh <- err
+		} else {
+			// Close the podCh channel, signaling we've observed deletion of the pod.
+			close(podCh)
+		}
+	}()
+
+	// Delete the "nginx-1" pod.
+	if err := f.DeletePod(pod.Namespace, pod.Name); err != nil {
+		t.Fatal(err)
+	}
+	// Wait for the delete event to be ACKed.
+	if err := <-podCh; err != nil {
+		t.Fatal(err)
+	}
+}
+
+//Create a Pod with mandatory config maps
+func TestMandatoryConfigMaps(t *testing.T) () {
+	//Create a pod with a single container with the above secrets
+	pod, err := f.CreatePod(f.CreatePodWithMandatoryConfigMaps())
+
+	//Getting stats from the provider
+	stats, err := f.GetStatsSummary()
+	if err != nil{
+		t.Fatal(err)
+	}
+
+	//Checking if the pod is present
+	if _, err := findPodInPodStats(stats,pod); err == nil{
+		t.Fatalf("Expecting to NOT find pod \"%s/%s\" when there are mandatory non existant ConfigMaps:",pod.Namespace,pod.Name)
+	}
+	// This ensures that we don't possibly miss the MODIFIED/DELETED events due to establishing the watch too late in the process.
+	podCh := make(chan error)
+	go func() {
+		// Wait for the pod to be reported as having been marked for deletion.
+		if err := f.WaitUntilPodDeleted(pod.Namespace, pod.Name); err != nil {
+			// Propagate the error to the outside so we can fail the test.
+			podCh <- err
+		} else {
+			// Close the podCh channel, signaling we've observed deletion of the pod.
+			close(podCh)
+		}
+	}()
+
+	// Delete the pod.
+	if err := f.DeletePod(pod.Namespace, pod.Name); err != nil {
+		t.Fatal(err)
+	}
+	// Wait for the delete event to be ACKed.
+	if err := <-podCh; err != nil {
+		t.Fatal(err)
+	}
+}
+
 // findPodInPodStats returns the index of the specified pod in the .pods field of the specified Summary object.
 // It returns an error if the specified pod is not found.
 func findPodInPodStats(summary *v1alpha1.Summary, pod *v1.Pod) (int, error) {
@@ -199,3 +380,6 @@ func findPodInPodStats(summary *v1alpha1.Summary, pod *v1.Pod) (int, error) {
 	}
 	return -1, fmt.Errorf("failed to find pod \"%s/%s\" in the slice of pod stats", pod.Namespace, pod.Name)
 }
+
+
+
