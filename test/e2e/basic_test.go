@@ -347,27 +347,6 @@ func TestMandatoryConfigMaps(t *testing.T) () {
 	if _, err := findPodInPodStats(stats,pod); err == nil{
 		t.Fatalf("Expecting to NOT find pod \"%s/%s\" when there are mandatory non existant ConfigMaps:",pod.Namespace,pod.Name)
 	}
-	// This ensures that we don't possibly miss the MODIFIED/DELETED events due to establishing the watch too late in the process.
-	podCh := make(chan error)
-	go func() {
-		// Wait for the pod to be reported as having been marked for deletion.
-		if err := f.WaitUntilPodDeleted(pod.Namespace, pod.Name); err != nil {
-			// Propagate the error to the outside so we can fail the test.
-			podCh <- err
-		} else {
-			// Close the podCh channel, signaling we've observed deletion of the pod.
-			close(podCh)
-		}
-	}()
-
-	// Delete the pod.
-	if err := f.DeletePod(pod.Namespace, pod.Name); err != nil {
-		t.Fatal(err)
-	}
-	// Wait for the delete event to be ACKed.
-	if err := <-podCh; err != nil {
-		t.Fatal(err)
-	}
 }
 
 // findPodInPodStats returns the index of the specified pod in the .pods field of the specified Summary object.
