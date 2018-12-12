@@ -4,124 +4,78 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+var (
+	bFalse = false
+	bTrue  = true
+)
 
-//Create a dummy pod with mandatory configmaps
-func (f *Framework) CreatePodWithMandatoryConfigMaps() (*corev1.Pod){
-
-	//Check with both Optional and Mandatory ConfigMaps
-	var mandatory bool = false
-	var optional bool = true
-	env := []corev1.EnvVar {
+// CreatePodObjectWithMandatoryConfigMapKey creates a pod object that references the "key_0" key from the "config-map-0" config map as mandatory.
+func (f *Framework) CreatePodObjectWithMandatoryConfigMapKey() *corev1.Pod {
+	return f.CreatePodObjectWithEnv([]corev1.EnvVar{
 		{
-			Name: "zero",
+			Name: "CONFIG_MAP_0_KEY_0",
 			ValueFrom: &corev1.EnvVarSource{
 				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: "Configname0"},
-					Key:"key0",
-					Optional: &optional ,
+					LocalObjectReference: corev1.LocalObjectReference{Name: "config-map-0"},
+					Key:                  "key_0",
+					Optional:             &bFalse,
 				},
 			},
-
 		},
+	})
+}
+
+// CreatePodObjectWithOptionalConfigMapKey creates a pod object that references the "key_0" key from the "config-map-0" config map as optional.
+func (f *Framework) CreatePodObjectWithOptionalConfigMapKey() *corev1.Pod {
+	return f.CreatePodObjectWithEnv([]corev1.EnvVar{
 		{
-			Name: "one",
+			Name: "CONFIG_MAP_0_KEY_0",
 			ValueFrom: &corev1.EnvVarSource{
 				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: "Configname1"},
-					Key:"key1",
-					Optional: &mandatory,
-				},
-
-			},
-		},
-	}
-
-	return f.CreatePodWithEnv(env)
-}
-
-
-//Create a dummy pod with optional configmaps
-func (f *Framework) CreatePodWithOptionalConfigMaps() (*corev1.Pod){
-	//Check with both Optional ConfigMaps
-	var optional bool = true
-	env := []corev1.EnvVar {
-		{
-			Name: "ENVIRONMENTVARIABLE",
-			ValueFrom: &corev1.EnvVarSource{
-				ConfigMapKeyRef: &corev1.ConfigMapKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: "configname0"},
-					Key:"key",
-					Optional:&optional,
+					LocalObjectReference: corev1.LocalObjectReference{Name: "config-map-0"},
+					Key:                  "key_0",
+					Optional:             &bTrue,
 				},
 			},
-
 		},
-	}
-
-	return f.CreatePodWithEnv(env)
+	})
 }
 
-
-//Create a dummy pod with optional Secrets
-func (f *Framework) CreatePodWithOptionalSecrets() (*corev1.Pod){
-	//Check with both Optional
-	//var mandatory bool = false
-	var optional bool = true
-	env := []corev1.EnvVar {
+// CreatePodObjectWithMandatorySecretKey creates a pod object that references the "key_0" key from the "secret-0" config map as mandatory.
+func (f *Framework) CreatePodObjectWithMandatorySecretKey() *corev1.Pod {
+	return f.CreatePodObjectWithEnv([]corev1.EnvVar{
 		{
-			Name: "ENVIRONMENTVARIABLE",
+			Name: "SECRET_0_KEY_0",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: "secretname0"},
-					Key:"key",
-					Optional:&optional,
+					LocalObjectReference: corev1.LocalObjectReference{Name: "secret-0"},
+					Key:                  "key_0",
+					Optional:             &bFalse,
 				},
 			},
-
 		},
-	}
-
-	return f.CreatePodWithEnv(env)
+	})
 }
 
-//Create a dummy pod with optional Secrets
-func (f *Framework) CreatePodWithMandatorySecrets() (*corev1.Pod){
-	//Check with both Optional and not optional Secrets
-	var mandatory bool = false
-	var optional bool = true
-	env := []corev1.EnvVar {
+// CreatePodObjectWithOptionalSecretKey creates a pod object that references the "key_0" key from the "secret-0" config map as optional.
+func (f *Framework) CreatePodObjectWithOptionalSecretKey() *corev1.Pod {
+	return f.CreatePodObjectWithEnv([]corev1.EnvVar{
 		{
-			Name: "zero",
+			Name: "SECRET_0_KEY_0",
 			ValueFrom: &corev1.EnvVarSource{
 				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: "secretname0"},
-					Key:"secretkey0",
-					Optional: &optional ,
+					LocalObjectReference: corev1.LocalObjectReference{Name: "secret-0"},
+					Key:                  "key_0",
+					Optional:             &bTrue,
 				},
 			},
-
 		},
-		{
-			Name: "one",
-			ValueFrom: &corev1.EnvVarSource{
-				SecretKeyRef: &corev1.SecretKeySelector{
-					LocalObjectReference: corev1.LocalObjectReference{Name: "secretname1"},
-					Key:"secretkey1",
-					Optional: &mandatory,
-				},
-
-			},
-		},
-	}
-	return f.CreatePodWithEnv(env)
+	})
 }
 
-//Creates a dummy pod with the environment variables passed
-func (f *Framework) CreatePodWithEnv(env []corev1.EnvVar) (*corev1.Pod)  {
-
-	pod := f.CreateDummyPodObjectWithPrefix("nginxtest","foo")
+// CreatePodObjectWithEnv creates a pod object whose name starts with "env-test-" and that uses the specified environment configuration for its first container.
+func (f *Framework) CreatePodObjectWithEnv(env []corev1.EnvVar) *corev1.Pod {
+	pod := f.CreateDummyPodObjectWithPrefix("env-test-", "foo")
 	pod.Spec.Containers[0].Env = env
 	return pod
 }
-
-
